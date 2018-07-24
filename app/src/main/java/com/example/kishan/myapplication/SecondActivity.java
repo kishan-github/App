@@ -1,20 +1,32 @@
 package com.example.kishan.myapplication;
 
-import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.app.Activity;
-import android.print.PrintAttributes;
-import android.renderscript.Sampler;
 import android.view.*;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 
-import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
+import com.android.volley.AuthFailureError;
+import com.android.volley.Cache;
+import com.android.volley.Network;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.BasicNetwork;
+import com.android.volley.toolbox.DiskBasedCache;
+import com.android.volley.toolbox.HurlStack;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class SecondActivity extends Activity {
 
@@ -25,6 +37,8 @@ public class SecondActivity extends Activity {
     private EditText password;
     private DBConnectr db;
     private UserDetails user;
+    private final String SERVER_URL = "http://192.168.42.237/register.php";
+    public RequestQueue requestQueue;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,10 +80,7 @@ public class SecondActivity extends Activity {
             diagParams.setMessage("Name cannot be empty");
             diagParams.setPositiveButtonText("OK");
 
-            CustomDialog dialog = new CustomDialog(this, diagParams);
-            //dialog.addViews(diagParams);
-            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-            dialog.show();
+            createDialog(diagParams);
             return;
         }
         if(age.getText().toString().isEmpty()) {
@@ -79,10 +90,7 @@ public class SecondActivity extends Activity {
             diagParams.setMessage("Name cannot be empty. Please enter a name");
             diagParams.setPositiveButtonText("OK");
 
-            CustomDialog dialog = new CustomDialog(this, diagParams);
-            //dialog.addViews(diagParams);
-            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-            dialog.show();
+            createDialog(diagParams);
             return;
         }
         if(email.getText().toString().isEmpty()) {
@@ -93,24 +101,7 @@ public class SecondActivity extends Activity {
             diagParams.setPositiveButtonText("CONFIRM");
             diagParams.setNegativeButtonText("CANCEL");
 
-            CustomDialog dialog = new CustomDialog(this, diagParams);
-            //dialog.addViews(diagParams);
-            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-            dialog.show();
-            return;
-        }
-        if(android.util.Patterns.EMAIL_ADDRESS.matcher(email.getText().toString()).matches()){
-            DialogParameters diagParams = new DialogParameters();
-
-            diagParams.setHeaderText("ARE YOU SURE YOU WANT TO DO THIS?");
-            diagParams.setMessage("Name cannot be empty. Please provide a name");
-            diagParams.setPositiveButtonText("CONFIRM");
-            diagParams.setNegativeButtonText("CANCEL");
-
-            CustomDialog dialog = new CustomDialog(this, diagParams);
-            //dialog.addViews(diagParams);
-            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-            dialog.show();
+            createDialog(diagParams);
             return;
         }
         if(password.getText().toString().isEmpty()) {
@@ -121,26 +112,22 @@ public class SecondActivity extends Activity {
             diagParams.setPositiveButtonText("CONFIRM");
             diagParams.setNegativeButtonText("CANCEL");
 
-            CustomDialog dialog = new CustomDialog(this, diagParams);
-            //dialog.addViews(diagParams);
-            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-            dialog.show();
+            createDialog(diagParams);
             return;
         }
-        /*
-        if(!db.checkUser(email.toString())) {
 
-            user.setName(name.toString().trim());
-            user.setAge(Integer.parseInt(age.toString()));
-            user.setEmail(email.toString().trim());
-            user.setPassword(password.toString());
-
-            db.addUser(user);
-            emptyInputEditText();
-            finish();
-            return;
-        }*/
+        startServerConnection();
         emptyInputEditText();
+    }
+
+    /**
+     * This method is to create the alert.
+     */
+    private void createDialog(DialogParameters diagParams) {
+        CustomDialog dialog = new CustomDialog(this, diagParams);
+        //dialog.addViews(diagParams);
+        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        dialog.show();
     }
 
     /**
@@ -151,6 +138,107 @@ public class SecondActivity extends Activity {
         age.setText(null);
         email.setText(null);
         password.setText(null);
+    }
+
+    /**
+     * This method is to start the connection with the server
+     */
+    private void startServerConnection() {
+
+        /*
+        Cache cache = new DiskBasedCache(getCacheDir(), 1024*1024);
+        Network network = new BasicNetwork(new HurlStack());
+        requestQueue = new RequestQueue(cache, network);
+
+        requestQueue.start();*/
+
+        /*
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST,
+                SERVER_URL,
+                (JSONObject) null,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            response.getString("name");
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+
+            }
+        });
+*/
+
+
+
+
+
+        StringRequest stringRequest = new StringRequest(Request.Method.POST,
+                SERVER_URL,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+
+                        if (response.toString().equalsIgnoreCase("SUCCESS")) {
+                            DialogParameters diagParams = new DialogParameters();
+
+                            diagParams.setIsSingleButton(true);
+                            diagParams.setMessage(response + ": Registered successfuly");
+                            diagParams.setPositiveButtonText("OK");
+                            createDialog(diagParams);
+
+                            //requestQueue.stop();
+                        }else if (response.toString().equalsIgnoreCase("USER EXIST")){
+                            DialogParameters diagParams = new DialogParameters();
+
+                            diagParams.setIsSingleButton(true);
+                            diagParams.setMessage(response + ": User already registered");
+                            diagParams.setPositiveButtonText("OK");
+                            createDialog(diagParams);
+                        }
+                        else {
+                            DialogParameters diagParams = new DialogParameters();
+
+                            diagParams.setIsSingleButton(true);
+                            diagParams.setMessage("ERROR : " + response);
+                            diagParams.setPositiveButtonText("OK");
+                            createDialog(diagParams);
+                        }
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        DialogParameters diagParams = new DialogParameters();
+
+                        diagParams.setIsSingleButton(true);
+                        diagParams.setMessage(error.toString() + "Something went wrong!!!!!!!!!!");
+                        diagParams.setPositiveButtonText("OK");
+                        createDialog(diagParams);
+
+                        error.printStackTrace();
+                        //requestQueue.stop();
+                    }
+                }){
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                Map<String, String> params = new HashMap<>();
+
+                params.put("NAME", name.getText().toString().trim());
+                params.put("AGE", age.getText().toString().trim());
+                params.put("EMAIL", email.getText().toString().trim());
+                params.put("PASSWORD", password.getText().toString().trim());
+
+                return params;
+            }
+        };
+
+                MySingleton.getaInstance(getApplicationContext()).addToRequest(stringRequest);
+                //requestQueue.add(stringRequest);
     }
 
 }
